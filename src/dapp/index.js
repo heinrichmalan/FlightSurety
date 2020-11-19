@@ -1,55 +1,514 @@
+// import DOM from './dom';
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 
-import DOM from './dom';
-import Contract from './contract';
-import './flightsurety.css';
+import Contract from "./contract";
+// import './flightsurety.css';
 
+const OracleUpdateEntry = ({ title, description, label, error, value }) => {
+    return (
+        <section>
+            <div style={{ display: "flex", flexDirection: "row" }}>
+                <div style={{ marginRight: "15px" }}>{label}</div>
+                <div>{error ? String(error) : String(value)}</div>
+            </div>
+        </section>
+    );
+};
 
-(async() => {
+const AirlineView = ({ contract }) => {
+    const { airlines } = contract;
+    const { selectedAirline, setSelectedAirline } = useState(airlines[0]);
 
-    let result = null;
+    const handleSelect = (e) => {
+        setSelectedAirline(e.target.value);
+    };
 
-    let contract = new Contract('localhost', () => {
+    return (
+        <div style={{ marginTop: "100px" }}>
+            <label>
+                {" "}
+                Airline to Act As
+                <select
+                    value={selectedAirline}
+                    style={{ marginLeft: "15px" }}
+                    onSelect={handleSelect}
+                >
+                    {airlines.map((item) => {
+                        return <option value={item}>{item}</option>;
+                    })}
+                </select>
+            </label>
+        </div>
+    );
+};
 
-        // Read transaction
-        contract.isOperational((error, result) => {
-            console.log(error,result);
-            display('Operational Status', 'Check if contract is operational', [ { label: 'Operational Status', error: error, value: result} ]);
+const FlightSelection = ({ contract, flights, setSelectedFlight, setView }) => {
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                width: "300px",
+                margin: "0 auto",
+            }}
+        >
+            {flights.map((item, index) => (
+                <FlightSelectRow
+                    key={index}
+                    flight={item}
+                    setSelectedFlight={setSelectedFlight}
+                    setView={setView}
+                />
+            ))}
+        </div>
+    );
+};
+
+const FlightSelectRow = ({ flight, setSelectedFlight, setView }) => {
+    const handlePurchase = () => {
+        setSelectedFlight(flight);
+        setView("purchase");
+    };
+    return (
+        <div
+            style={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "300px",
+                marginBottom: "5px",
+            }}
+        >
+            <div style={{ display: "flex", flexDirection: "column" }}>
+                <div>{flight.code}</div>
+                <div>{flight.time}</div>
+            </div>
+            <button
+                style={{
+                    borderRadius: "5px",
+                    padding: "5px 10px",
+                    border: "none",
+                    backgroundColor: "#343A40",
+                    color: "white",
+                    cursor: "pointer",
+                }}
+                onClick={() => handlePurchase()}
+            >
+                Purchase
+            </button>
+        </div>
+    );
+};
+
+const FlightPurchase = ({ contract, passenger, selectedFlight, setView }) => {
+    const [purchasePrice, setPurchasePrice] = useState(0.01);
+
+    const handlePriceChange = (e) => {
+        setPurchasePrice(e.target.value);
+    };
+
+    const handlePurchase = () => {
+        contract.purchasePolicy(
+            passenger,
+            selectedFlight.code,
+            purchasePrice,
+            (error, result) => {
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                console.log(result);
+                setView("selection");
+            }
+        );
+    };
+
+    const cancel = () => {
+        setView("selection");
+    };
+
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                width: "300px",
+                margin: "0 auto",
+            }}
+        >
+            <h3>Purchase</h3>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    justifyContent: "space-between",
+                }}
+            >
+                <h4>{selectedFlight.code}</h4>
+                <h5>{selectedFlight.time}</h5>
+            </div>
+            <label>
+                Purchase Price
+                <input
+                    type="number"
+                    max={1.0}
+                    min={0.01}
+                    value={purchasePrice}
+                    style={{ width: "100%" }}
+                    step="0.01"
+                    onChange={handlePriceChange}
+                />
+            </label>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    justifyContent: "space-between",
+                }}
+            >
+                <button
+                    style={{
+                        borderRadius: "5px",
+                        padding: "5px 10px",
+                        border: "none",
+                        backgroundColor: "#59b759",
+                        color: "white",
+                        cursor: "pointer",
+                        width: "100px",
+                    }}
+                    onClick={handlePurchase}
+                >
+                    Buy
+                </button>
+                <button
+                    style={{
+                        borderRadius: "5px",
+                        padding: "5px 10px",
+                        border: "none",
+                        backgroundColor: "#cc5b5b",
+                        color: "white",
+                        cursor: "pointer",
+                        width: "100px",
+                    }}
+                    onClick={cancel}
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const getAvailableFlights = (policyData) => {
+    const FLIGHTS = [
+        {
+            code: "QF1",
+            time: "12:50pm",
+        },
+        {
+            code: "LH1",
+            time: "4:25pm",
+        },
+        {
+            code: "JL1",
+            time: "9:30am",
+        },
+        {
+            code: "QR1",
+            time: "2:15pm",
+        },
+        {
+            code: "SQ1",
+            time: "8:45pm",
+        },
+        {
+            code: "UA1",
+            time: "5:30am",
+        },
+    ];
+
+    const policyFlightCodes = policyData.data.map((item) => item.flightCode);
+    return FLIGHTS.filter((item) => policyFlightCodes.indexOf(item.code) == -1);
+};
+
+const InsurancePurchaseView = ({ contract, passenger, policyData }) => {
+    const availableFlights = policyData.loading
+        ? []
+        : getAvailableFlights(policyData);
+    const [view, setView] = useState("selection");
+    const [selectedFlight, setSelectedFlight] = useState(null);
+
+    return view === "selection" ? (
+        <FlightSelection
+            contract={contract}
+            flights={availableFlights}
+            setSelectedFlight={setSelectedFlight}
+            setView={setView}
+        />
+    ) : (
+        <FlightPurchase {...{ selectedFlight, contract, setView, passenger }} />
+    );
+};
+
+const PolicyRow = ({ label, value }) => {
+    return (
+        <div
+            style={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+            }}
+        >
+            <div>{label}:</div>
+            <div>{value}</div>
+        </div>
+    );
+};
+
+const PassengerData = ({ contract, passenger, setPolicyData }) => {
+    if (!passenger) return null;
+    const [passengerBalance, setPassengerBalance] = useState("Fetching");
+    const [activePolicies, setActivePolicies] = useState([]);
+
+    useEffect(() => {
+        web3.eth.getBalance(passenger).then((data) => {
+            setPassengerBalance(web3.utils.fromWei(String(data)));
         });
-    
 
-        // User-submitted transaction
-        DOM.elid('submit-oracle').addEventListener('click', () => {
-            let flight = DOM.elid('flight-number').value;
-            // Write transaction
-            contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
-            });
-        })
-    
+        contract.getPassengerPolicies(passenger, (error, result) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            setActivePolicies(result);
+            setPolicyData({ loading: false, data: result });
+        });
+    }, [passenger, activePolicies]);
+
+    return (
+        <div
+            style={{ width: "100%", textAlign: "center", marginBottom: "15px" }}
+        >
+            <div>Balance: {passengerBalance} ETH</div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+                <h4>Active Policies</h4>
+                {activePolicies.map((item, index) => {
+                    return (
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between",
+                                width: "450px",
+                                marginBottom: "5px",
+                                border: "1px solid grey",
+                                borderRadius: "5px",
+                                padding: "5px",
+                            }}
+                            key={index}
+                        >
+                            <PolicyRow label="Airline" value={item.airline} />
+                            <PolicyRow label="Flight" value={item.flightCode} />
+                            <PolicyRow
+                                label="Price Paid"
+                                value={`${web3.utils.fromWei(
+                                    item.pricePaid
+                                )} ETH`}
+                            />
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+const PassengerView = ({ contract }) => {
+    const { passengers } = contract;
+    const [selectedPassenger, setSelectedPassenger] = useState(passengers[0]);
+    const [policyData, setPolicyData] = useState({
+        loading: true,
+        activePolicies: [],
     });
-    
+    const handleSelect = (e) => {
+        setSelectedPassenger(e.target.value);
+    };
+    return (
+        <div style={{ margin: "0 auto", marginTop: "100px", width: "450px" }}>
+            <label style={{ textAlign: "center", width: "100%" }}>
+                {" "}
+                Passenger to Act As
+                <select
+                    value={selectedPassenger}
+                    style={{ marginLeft: "15px" }}
+                    onChange={handleSelect}
+                >
+                    {passengers
+                        .filter((item) => {
+                            return item != null || item != undefined;
+                        })
+                        .map((item) => {
+                            return <option value={item}>{item}</option>;
+                        })}
+                </select>
+            </label>
+            <PassengerData
+                passenger={selectedPassenger}
+                contract={contract}
+                setPolicyData={setPolicyData}
+            />
+            <InsurancePurchaseView
+                contract={contract}
+                passenger={selectedPassenger}
+                policyData={policyData}
+            />
+        </div>
+    );
+};
 
-})();
+const OraclesView = ({ contract }) => {
+    const [flight, setFlight] = useState("");
+    const [oracleUpdates, setOracleUpdates] = useState([]);
 
+    const handleFlightUpdate = (e) => {
+        setFlight(e.target.value);
+    };
 
-function display(title, description, results) {
-    let displayDiv = DOM.elid("display-wrapper");
-    let section = DOM.section();
-    section.appendChild(DOM.h2(title));
-    section.appendChild(DOM.h5(description));
-    results.map((result) => {
-        let row = section.appendChild(DOM.div({className:'row'}));
-        row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
-        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
-        section.appendChild(row);
-    })
-    displayDiv.append(section);
+    const handleOracleSubmit = () => {
+        contract.fetchFlightStatus(flight, (error, result) => {
+            let data = {
+                label: "Fetch Flight Status",
+                error: error,
+                value: result.flight + " " + result.timestamp,
+            };
+            setOracleUpdates([
+                ...oracleUpdates,
+                <OracleUpdateEntry {...data} key={result.flight} />,
+            ]);
+        });
+    };
+    return (
+        <main className="container">
+            <div className="row top-20" style={{ marginTop: "100px" }}>
+                <label
+                    className="form"
+                    style={{
+                        marginRight: "5px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
+                    Flight
+                </label>
+                <input
+                    type="text"
+                    id="flight-number"
+                    onChange={handleFlightUpdate}
+                    style={{ marginRight: "5px" }}
+                />
+                <button
+                    className="btn btn-primary"
+                    id="submit-oracle"
+                    onClick={handleOracleSubmit}
+                >
+                    Submit to Oracles
+                </button>
+            </div>
+            <div
+                id="display-wrapper"
+                className="top-20"
+                style={{ marginTop: "100px" }}
+            >
+                <section>
+                    <h2>{"Oracles"}</h2>
+                    <h5>{"Trigger oracles"}</h5>
+                    {oracleUpdates}
+                </section>
+            </div>
+        </main>
+    );
+};
 
-}
+const Navbar = ({ contract }) => {
+    const [operational, setOperational] = useState("Fetching");
 
+    useEffect(() => {
+        contract.isOperational((error, result) => {
+            if (error || !result) {
+                setOperational("Not Operational");
+            } else {
+                setOperational("Operational");
+            }
+        });
+    }, []);
 
+    return (
+        <nav
+            className="navbar navbar-expand-md navbar-dark bg-dark fixed-top"
+            style={{ display: "flex", justifyContent: "space-between" }}
+        >
+            <div>
+                <Link
+                    className="navbar-brand"
+                    to="/"
+                    style={{ marginRight: "15px" }}
+                >
+                    FlightSurety
+                </Link>
+                <Link
+                    className="navbar-brand"
+                    to="/passengers"
+                    style={{ marginRight: "15px", fontSize: "15px" }}
+                >
+                    Passenger View
+                </Link>
+                <Link
+                    className="navbar-brand"
+                    to="/airlines"
+                    style={{ marginRight: "15px", fontSize: "15px" }}
+                >
+                    Airline View
+                </Link>
+            </div>
+            <button
+                className="navbar-toggler"
+                type="button"
+                data-toggle="collapse"
+                data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+            >
+                <span className="navbar-toggler-icon"></span>
+            </button>
+            <div style={{ color: "white" }}>Status: {operational}</div>
+        </nav>
+    );
+};
 
+const App = () => {
+    const contract = new Contract("localhost", () => {});
 
+    return (
+        <Router>
+            <Navbar contract={contract} />
+            <Switch>
+                <Route path="/passengers">
+                    <PassengerView contract={contract} />
+                </Route>
+                <Route path="/airlines">
+                    <AirlineView contract={contract} />
+                </Route>
+                <Route path="/">
+                    <OraclesView contract={contract} />
+                </Route>
+            </Switch>
+        </Router>
+    );
+};
 
-
-
+ReactDOM.render(<App />, document.getElementById("app"));
