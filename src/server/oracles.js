@@ -1,4 +1,11 @@
-const STATUS_CODES = [0, 10, 20, 30, 40, 50];
+const STATUS_CODES = [
+    0, // Unknown
+    10, // On Time
+    20, // Late Airline
+    30, // Late Weather
+    40, // Late Technical
+    50, // Late Other
+];
 
 export default class Oracle {
     constructor(address) {
