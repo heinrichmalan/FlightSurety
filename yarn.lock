@@ -7711,6 +7711,11 @@ sshpk@^1.7.0:
     safer-buffer "^2.0.2"
     tweetnacl "~0.14.0"
 
+start-server-nestjs-webpack-plugin@^2.2.5:
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/start-server-nestjs-webpack-plugin/-/start-server-nestjs-webpack-plugin-2.2.5.tgz#4828f7fe964c275c9479d6a3aa0c31c52c8e2665"
+  integrity sha512-tnuGcGbT7qSF5h08/T7YkP6rX/m3DcsC+s8srzD7LNC7WIR7p/FU1+iZqfNUHAtjSFdAG0thK2H3by2AY1kr6w==
+
 start-server-webpack-plugin@2.2.5:
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/start-server-webpack-plugin/-/start-server-webpack-plugin-2.2.5.tgz#4a2838759b0f36acd11b0b2f5f196f289ae29d31"
@@ -8784,6 +8789,11 @@ webpack-merge@^4.2.2:
   integrity sha512-TUE1UGoTX2Cd42j3krGYqObZbOD+xF7u28WB7tfUordytSjbWTIjK/8V0amkBfTYN4/pB/GIDlJZZ657BGG19g==
   dependencies:
     lodash "^4.17.15"
+
+webpack-node-externals@^2.5.2:
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/webpack-node-externals/-/webpack-node-externals-2.5.2.tgz#178e017a24fec6015bc9e672c77958a6afac861d"
+  integrity sha512-aHdl/y2N7PW2Sx7K+r3AxpJO+aDMcYzMQd60Qxefq3+EwhewSbTBqNumOsCE1JsCUNoyfGj5465N0sSf6hc/5w==
 
 webpack-sources@^2.1.1:
   version "2.2.0"
