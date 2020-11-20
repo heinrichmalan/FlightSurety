@@ -22,7 +22,9 @@ const addOracleRequestListener = () => {
         function (error, event) {
             if (error) console.log(error);
             const { index, airline, flight, timestamp } = event.returnValues;
-
+            console.log(
+                `Oracle Request Received\nIndex: ${index}\nAirline: ${airline}\nFlight Code: ${flight}\n${timestamp}\n`
+            );
             let oracles = oracleIndexMap[Number(index)];
             if (!oracles) {
                 console.log("No oracles");
