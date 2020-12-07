@@ -68,7 +68,6 @@ export default class Contract {
                 payload.timestamp
             )
             .send({ from: self.owner }, (error, result) => {
-                console.log(result);
                 callback(error, payload);
             });
     }
@@ -88,6 +87,18 @@ export default class Contract {
     getPassengerPolicies(passenger, callback) {
         this.flightSuretyApp.methods
             .getActivePolicies()
+            .call({ from: passenger }, callback);
+    }
+
+    getFlightsStatus(flightCodes, callback) {
+        this.flightSuretyApp.methods
+            .getFlightStatuses(flightCodes)
+            .call({ from: self.owner }, callback);
+    }
+
+    getInsuranceCredit(passenger, callback) {
+        this.flightSuretyApp.methods
+            .getInsuranceCredits()
             .call({ from: passenger }, callback);
     }
 }
