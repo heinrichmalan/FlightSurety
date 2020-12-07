@@ -30,7 +30,9 @@ contract FlightSuretyData {
     struct Policy {
         string flightCode;
         address airline;
+        address insuree;
         uint256 pricePaid;
+        bool policyOpen;
     }
     mapping(address => Policy[]) private passengerPolicies;
 
@@ -39,6 +41,28 @@ contract FlightSuretyData {
         returns (Policy[])
     {
         return passengerPolicies[passenger];
+    }
+
+    mapping(string => Policy[]) private flightCodePolicies;
+
+    function getFlightCodePolicies(string flightCode)
+        external
+        returns (Policy[])
+    {
+        return flightCodePolicies[flightCode];
+    }
+
+    mapping(address => uint256) private accountBalances;
+
+    function getAccountBalance(address accountAddress)
+        external
+        returns (uint256)
+    {
+        return accountBalances[accountAddress];
+    }
+
+    function creditAccount(address accountAddress, uint256 amount) internal {
+        accountBalances[accountAddress] += amount;
     }
 
     /********************************************************************************************/
@@ -168,12 +192,6 @@ contract FlightSuretyData {
             numAirlines += 1;
             emit AirlineRegistered(newAirline, 1, true);
         } else {
-            // struct Vote {
-            //     bool isOpen;
-            //     bool[] votes;
-            //     address[] voters;
-            //     address[] hasVoted;
-            // }
             Vote memory airlineVote;
 
             airlineVote.isOpen = true;
@@ -293,27 +311,78 @@ contract FlightSuretyData {
     function buy(
         address passenger,
         address airline,
-        string flightNumber,
+        string flightCode,
         uint256 value
     ) external {
         Policy memory passengerPolicy;
         passengerPolicy.airline = airline;
-        passengerPolicy.flightCode = flightNumber;
+        passengerPolicy.flightCode = flightCode;
         passengerPolicy.pricePaid = value;
+        passengerPolicy.insuree = passenger;
+        passengerPolicy.policyOpen = true;
         passengerPolicies[passenger].push(passengerPolicy);
-        emit PolicyPurchased(passenger, flightNumber, value);
+        flightCodePolicies[flightCode].push(passengerPolicy);
+        emit PolicyPurchased(passenger, flightCode, value);
+    }
+
+    function closePolicies(string flightCode) external {
+        for (uint256 j = 0; j < flightCodePolicies[flightCode].length; j++) {
+            flightCodePolicies[flightCode][j].policyOpen = false;
+
+            for (
+                uint256 i = 0;
+                i <
+                passengerPolicies[flightCodePolicies[flightCode][j].insuree]
+                    .length;
+                i++
+            ) {
+                if (
+                    keccak256(
+                        bytes(
+                            passengerPolicies[flightCodePolicies[flightCode][j]
+                                .insuree][i]
+                                .flightCode
+                        )
+                    ) == keccak256(bytes(flightCode))
+                ) {
+                    passengerPolicies[flightCodePolicies[flightCode][j]
+                        .insuree][i]
+                        .policyOpen = false;
+                }
+            }
+        }
     }
 
     /**
      *  @dev Credits payouts to insurees
      */
-    function creditInsurees() external pure {}
+    function creditInsurees(string flightCode) external {
+        string memory flightCodeMem = flightCode;
+        Policy[] memory flightCodesPolicies = flightCodePolicies[flightCode];
+        for (uint256 j = 0; j < flightCodesPolicies.length; j++) {
+            Policy memory policy = flightCodesPolicies[j];
+            if (policy.policyOpen) {
+                creditAccount(policy.insuree, policy.pricePaid);
+                Policy[] memory passengersPolicies = passengerPolicies[policy
+                    .insuree];
+                for (uint256 i = 0; i < passengersPolicies.length; i++) {
+                    Policy memory passengerPolicy = passengersPolicies[i];
+                    if (
+                        keccak256(bytes(passengerPolicy.flightCode)) ==
+                        keccak256(bytes(flightCodeMem))
+                    ) {
+                        passengersPolicies[i].policyOpen = false;
+                    }
+                }
+            }
+        }
+    }
 
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
      */
-    function pay() external pure {}
+    function pay(address payee) external {}
 
     /**
      * @dev Initial funding for the insurance. Unless there are too many delayed flights
