@@ -138,6 +138,10 @@ contract FlightSuretyApp {
         return flightSuretyData.getPassengerPolicies(msg.sender);
     }
 
+    function getInsuranceCredits() external returns (uint256) {
+        return flightSuretyData.getAccountBalance(msg.sender);
+    }
+
     /**
      * @dev Register a future flight for insuring.
      *
@@ -147,6 +151,27 @@ contract FlightSuretyApp {
         // TODO have a bunch of flights
         // maybe a mapping to a mapping
         // airline -> { flightCode -> struct}
+    }
+
+    mapping(string => uint8) private flightStatuses;
+
+    struct FlightStatus {
+        string flightCode;
+        uint8 status;
+    }
+
+    function getFlightStatuses(string[] flightCodes)
+        public
+        returns (FlightStatus[])
+    {
+        FlightStatus[] memory flightStatusesView = new FlightStatus[](
+            flightCodes.length
+        );
+        for (uint256 i = 0; i < flightCodes.length; i++) {
+            flightStatusesView[i].flightCode = flightCodes[i];
+            flightStatusesView[i].status = flightStatuses[flightCodes[i]];
+        }
+        return flightStatusesView;
     }
 
     /**
@@ -159,8 +184,16 @@ contract FlightSuretyApp {
         string memory flight,
         uint256 timestamp,
         uint8 statusCode
-    ) internal pure {
+    ) internal {
         // TODO payout customer if stuff went wrong?
+
+        flightStatuses[flight] = statusCode;
+        if (statusCode != uint8(0)) {
+            if (statusCode == uint8(20)) {
+                flightSuretyData.creditInsurees(flight);
+            }
+            flightSuretyData.closePolicies(flight);
+        }
     }
 
     // Generate a request for oracles to fetch flight information
@@ -294,7 +327,6 @@ contract FlightSuretyApp {
             oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES
         ) {
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
-
             // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
         }
