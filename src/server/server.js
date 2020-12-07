@@ -40,9 +40,12 @@ const addOracleRequestListener = () => {
                         timestamp,
                         statusCode
                     )
-                    .send({ from: oracle.address }, (error, result) => {
-                        console.log(error, result);
-                    });
+                    .send(
+                        { from: oracle.address, gas: 500000 },
+                        (error, result) => {
+                            // console.log(error, result);
+                        }
+                    );
             }
         }
     );
