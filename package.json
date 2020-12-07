@@ -11,7 +11,8 @@
     "test": "truffle test ./test/flightSurety.js",
     "dapp": "webpack serve --mode development --config webpack.config.dapp.js --history-api-fallback",
     "dapp:prod": "webpack --mode production  --config webpack.config.dapp.js",
-    "server": "rm -rf ./prod/server && webpack --config webpack.config.server.js"
+    "server": "rm -rf ./prod/server && webpack --config webpack.config.server.js",
+    "ganache": "ganachcli -m 'involve hero zero valid donor august cycle layer song liquid year network -a 20"
   },
   "author": "Nik Kalyani <nik@kalyani.com> https://www.kalyani.com",
   "devDependencies": {
