@@ -118,7 +118,6 @@ const FlightPurchase = ({ contract, passenger, selectedFlight, setView }) => {
                     console.error(error);
                     return;
                 }
-                console.log(result);
                 setView("selection");
             }
         );
@@ -271,11 +270,22 @@ const PolicyRow = ({ label, value }) => {
 const PassengerData = ({ contract, passenger, setPolicyData }) => {
     if (!passenger) return null;
     const [passengerBalance, setPassengerBalance] = useState("Fetching");
+    const [insuranceCredits, setInsuranceCredits] = useState("Fetching");
     const [activePolicies, setActivePolicies] = useState([]);
+    const [changed, setChanged] = useState(false);
 
     useEffect(() => {
+        if (changed) setChanged(false);
         web3.eth.getBalance(passenger).then((data) => {
             setPassengerBalance(web3.utils.fromWei(String(data)));
+        });
+
+        contract.getInsuranceCredit(passenger, (error, result) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            setInsuranceCredits(result);
         });
 
         contract.getPassengerPolicies(passenger, (error, result) => {
@@ -283,16 +293,60 @@ const PassengerData = ({ contract, passenger, setPolicyData }) => {
                 console.error(error);
                 return;
             }
-            setActivePolicies(result);
+            // setActivePolicies(result);
+            const policies = [];
+            for (let policy of result) policies.push({ ...policy });
+            const policyCodes = result.map((item) => item.flightCode);
+            contract.getFlightsStatus(policyCodes, (error, result) => {
+                if (error) return;
+                for (let status of result) {
+                    for (let policy of policies) {
+                        if (policy.flightCode == status.flightCode)
+                            policy.status = status.status;
+                    }
+                }
+                setActivePolicies(policies);
+            });
+
             setPolicyData({ loading: false, data: result });
         });
-    }, [passenger, activePolicies]);
+    }, [passenger, changed]);
+
+    const getStatusFromCode = (statusCode) => {
+        const statusMap = {
+            0: "Unknown",
+            10: "On Time",
+            20: "Late Airline",
+            30: "Late Weather",
+            40: "Late Technical",
+            50: "Late Other",
+        };
+
+        return statusMap[statusCode];
+    };
+
+    const handleOracleSubmit = (flight) => {
+        contract.fetchFlightStatus(flight, (error, result) => {
+            let data = {
+                label: "Fetch Flight Status",
+                error: error,
+                value: result.flight + " " + result.timestamp,
+            };
+            setChanged(true);
+        });
+    };
 
     return (
         <div
             style={{ width: "100%", textAlign: "center", marginBottom: "15px" }}
         >
-            <div>Balance: {passengerBalance} ETH</div>
+            <div>Wallet Balance: {passengerBalance} ETH</div>
+            <div>
+                Insurance Credits:{" "}
+                {insuranceCredits != "Fetching" &&
+                    web3.utils.fromWei(String(insuranceCredits))}{" "}
+                ETH
+            </div>
             <div style={{ display: "flex", flexDirection: "column" }}>
                 <h4>Active Policies</h4>
                 {activePolicies.map((item, index) => {
@@ -313,11 +367,36 @@ const PassengerData = ({ contract, passenger, setPolicyData }) => {
                             <PolicyRow label="Airline" value={item.airline} />
                             <PolicyRow label="Flight" value={item.flightCode} />
                             <PolicyRow
+                                label="Flight Status"
+                                value={getStatusFromCode(item.status)}
+                            />
+                            <PolicyRow
+                                label="Policy Status"
+                                value={item.policyOpen ? "Open" : "Closed"}
+                            />
+                            <PolicyRow
                                 label="Price Paid"
                                 value={`${web3.utils.fromWei(
                                     item.pricePaid
                                 )} ETH`}
                             />
+                            <div
+                                style={{
+                                    width: "100%",
+                                    display: "flex",
+                                    justifyContent: "space-around",
+                                }}
+                            >
+                                {item.policyOpen && (
+                                    <button
+                                        onClick={() =>
+                                            handleOracleSubmit(item.flightCode)
+                                        }
+                                    >
+                                        Update Status
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     );
                 })}
