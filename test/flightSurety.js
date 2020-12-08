@@ -89,7 +89,7 @@ contract("Flight Surety Tests", async (accounts) => {
                 from: config.firstAirline,
             });
         } catch (e) {
-            console.error(e);
+            // console.error(e);
         }
         let result = await config.flightSuretyData.isAirline.call(newAirline);
 
@@ -104,7 +104,7 @@ contract("Flight Surety Tests", async (accounts) => {
     it("(airline) can register an Airline using registerAirline() if it is funded", async () => {
         // ARRANGE
         let newAirline = accounts[2];
-        await config.flightSuretyData.fund({
+        await config.flightSuretyApp.fundAirline({
             value: web3.utils.toWei("11", "ether"),
             from: config.firstAirline,
         });
@@ -137,19 +137,38 @@ contract("Flight Surety Tests", async (accounts) => {
 
     it("(airline) cannot register an airline if not a registered airline", async () => {
         let impostor = accounts[3];
-        await config.flightSuretyData.fund({
-            value: web3.utils.toWei("11", "ether"),
-            from: impostor,
-        });
+
+        try {
+            await config.flightSuretyApp.registerAirline(newAirline, {
+                from: impostor,
+            });
+            asset.fail(
+                "Should not be able to register an airline as an unregistered airline"
+            );
+        } catch (err) {}
+    });
+
+    it("(airline) cannot fund an airline if not a registered airline", async () => {
+        let impostor = accounts[3];
+
+        try {
+            await config.flightSuretyApp.fundAirline({
+                from: impostor,
+            });
+            asset.fail(
+                "Should not be able to register an airline as an unregistered airline"
+            );
+        } catch (err) {}
     });
 
     it("(airline) a registered airline can register an airline without multiparty concensus up to 4 airlines", async () => {
         let currentRegisterer = accounts[2];
-        await config.flightSuretyData.fund({
+        await config.flightSuretyApp.fundAirline({
             value: web3.utils.toWei("11", "ether"),
             from: currentRegisterer,
         });
         let newAirline = accounts[3];
+
         let res;
         let events;
         try {
@@ -174,11 +193,12 @@ contract("Flight Surety Tests", async (accounts) => {
         }
 
         currentRegisterer = accounts[3];
-        await config.flightSuretyData.fund({
+        await config.flightSuretyApp.fundAirline({
             value: web3.utils.toWei("11", "ether"),
             from: currentRegisterer,
         });
         newAirline = accounts[4];
+
         try {
             res = await config.flightSuretyApp.registerAirline(newAirline, {
                 from: currentRegisterer,
@@ -201,7 +221,7 @@ contract("Flight Surety Tests", async (accounts) => {
         }
 
         currentRegisterer = accounts[4];
-        await config.flightSuretyData.fund({
+        await config.flightSuretyApp.fundAirline({
             value: web3.utils.toWei("11", "ether"),
             from: currentRegisterer,
         });
