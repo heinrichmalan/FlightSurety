@@ -40,6 +40,13 @@ To build dapp for prod:
 Deploy the contents of the ./dapp folder
 
 
+## Software Versions
+Truffle v5.1.53 (core: 5.1.53)
+Solidity - ^0.4.24 (solc-js)
+Node v13.14.0
+Web3.js v1.2.9
+Ganache CLI v6.12.1 (ganache-core: 2.13.1)
+
 ## Resources
 
 * [How does Ethereum work anyway?](https://medium.com/@preethikasireddy/how-does-ethereum-work-anyway-22d1df506369)
