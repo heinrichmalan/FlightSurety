@@ -18,11 +18,55 @@ const OracleUpdateEntry = ({ title, description, label, error, value }) => {
 };
 
 const AirlineView = ({ contract }) => {
-    const { airlines } = contract;
-    const { selectedAirline, setSelectedAirline } = useState(airlines[0]);
+    const [airlines, setAirlines] = useState([contract.airlines[0]]);
+    const [selectedAirline, setSelectedAirline] = useState(
+        contract.airlines[0]
+    );
+    const [funded, setFunded] = useState(false);
+    const [changed, setChanged] = useState(true);
+    const [airlineAddress, setAirlineAddress] = useState("");
+    console.log(contract.airlines);
+    const registerAirline = () => {
+        contract.registerAirline(
+            airlineAddress,
+            selectedAirline,
+            (error, data) => {
+                console.log(error, data);
+                setAirlineAddress("");
+            }
+        );
+        setChanged(true);
+    };
+
+    const handleChange = (e) => {
+        setAirlineAddress(e.target.value);
+    };
 
     const handleSelect = (e) => {
         setSelectedAirline(e.target.value);
+        setChanged(true);
+    };
+
+    useEffect(() => {
+        if (!changed) return;
+        if (changed) setChanged(false);
+        contract.getRegisteredAirlines((error, data) => {
+            console.log(error, data);
+            setAirlines(data);
+        });
+
+        contract.isFundedAirline(selectedAirline, (error, data) => {
+            if (error) return;
+            console.log("Airline funded: ", data);
+            setFunded(data);
+        });
+    }, [selectedAirline, changed]);
+
+    const fundAirline = () => {
+        contract.fundAirline(selectedAirline, (error, data) => {
+            console.log(error, data);
+            setChanged(true);
+        });
     };
 
     return (
@@ -33,13 +77,42 @@ const AirlineView = ({ contract }) => {
                 <select
                     value={selectedAirline}
                     style={{ marginLeft: "15px" }}
-                    onSelect={handleSelect}
+                    onChange={handleSelect}
                 >
                     {airlines.map((item) => {
                         return <option value={item}>{item}</option>;
                     })}
                 </select>
             </label>
+            <h4>Funding Status</h4>
+            <div>
+                {funded ? "Fully Funded" : "Requires Funding of 10 Ether"}
+                {!funded && <button onClick={fundAirline}>Fund Airline</button>}
+            </div>
+            {funded && (
+                <div
+                    className="top-20"
+                    style={{
+                        marginTop: "100px",
+                        display: "flex",
+                        flexDirection: "column",
+                    }}
+                >
+                    <h3>Airlines</h3>
+                    <h4>Register Airline</h4>
+                    <label>
+                        Address
+                        <input
+                            style={{ marginLeft: "5px", width: "100%" }}
+                            type="text"
+                            value={airlineAddress}
+                            placeholder="Airline Address"
+                            onChange={handleChange}
+                        />
+                    </label>
+                    <button onClick={registerAirline}>Register</button>
+                </div>
+            )}
         </div>
     );
 };
@@ -336,6 +409,13 @@ const PassengerData = ({ contract, passenger, setPolicyData }) => {
         });
     };
 
+    const withdrawCredits = () => {
+        contract.withdrawCredit(passenger, (error, result) => {
+            console.log(error, result);
+            setChanged(true);
+        });
+    };
+
     return (
         <div
             style={{ width: "100%", textAlign: "center", marginBottom: "15px" }}
@@ -347,7 +427,20 @@ const PassengerData = ({ contract, passenger, setPolicyData }) => {
                     web3.utils.fromWei(String(insuranceCredits))}{" "}
                 ETH
             </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+                {insuranceCredits > 0 && (
+                    <button onClick={withdrawCredits}>
+                        Withdraw Credits to Account
+                    </button>
+                )}
+            </div>
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    marginTop: "15px",
+                }}
+            >
                 <h4>Active Policies</h4>
                 {activePolicies.map((item, index) => {
                     return (
@@ -512,6 +605,98 @@ const OraclesView = ({ contract }) => {
     );
 };
 
+const ContractOwnerView = ({ contract }) => {
+    const [airlineAddress, setAirlineAddress] = useState("");
+    console.log(contract.airlines[0]);
+    const setContractOperatingStatus = (value) => {
+        contract.setOperatingStatus(value, (error, data) => {
+            console.log(error, data);
+            window.location.reload();
+        });
+    };
+
+    const registerAirline = () => {
+        contract.registerAirline(
+            airlineAddress,
+            contract.owner,
+            (error, data) => {
+                console.log(error, data);
+                setAirlineAddress("");
+            }
+        );
+    };
+
+    const handleChange = (e) => {
+        setAirlineAddress(e.target.value);
+    };
+
+    return (
+        <main className="container">
+            <div
+                className="top-20"
+                style={{
+                    marginTop: "100px",
+                    display: "flex",
+                    flexDirection: "column",
+                }}
+            >
+                <button
+                    style={{
+                        width: "auto",
+                        marginBottom: "5px",
+                        backgroundColor: "#fc7b7b",
+                        border: "none",
+                        color: "white",
+                        padding: "5px",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                    }}
+                    onClick={() => setContractOperatingStatus(false)}
+                >
+                    Suspend Contract Operation
+                </button>
+                <button
+                    style={{
+                        width: "auto",
+                        marginBottom: "5px",
+                        backgroundColor: "#3ddb5a",
+                        border: "none",
+                        color: "white",
+                        padding: "5px",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                    }}
+                    onClick={() => setContractOperatingStatus(true)}
+                >
+                    Start/Resume Contract Operation
+                </button>
+            </div>
+            <div
+                className="top-20"
+                style={{
+                    marginTop: "100px",
+                    display: "flex",
+                    flexDirection: "column",
+                }}
+            >
+                <h3>Airlines</h3>
+                <h4>Register Airline</h4>
+                <label>
+                    Address
+                    <input
+                        style={{ marginLeft: "5px", width: "100%" }}
+                        type="text"
+                        value={airlineAddress}
+                        placeholder="Airline Address"
+                        onChange={handleChange}
+                    />
+                </label>
+                <button onClick={registerAirline}>Register</button>
+            </div>
+        </main>
+    );
+};
+
 const Navbar = ({ contract }) => {
     const [operational, setOperational] = useState("Fetching");
 
@@ -552,6 +737,13 @@ const Navbar = ({ contract }) => {
                 >
                     Airline View
                 </Link>
+                <Link
+                    className="navbar-brand"
+                    to="/contract-owner"
+                    style={{ marginRight: "15px", fontSize: "15px" }}
+                >
+                    Contract Owner View
+                </Link>
             </div>
             <button
                 className="navbar-toggler"
@@ -581,6 +773,9 @@ const App = () => {
                 </Route>
                 <Route path="/airlines">
                     <AirlineView contract={contract} />
+                </Route>
+                <Route path="/contract-owner">
+                    <ContractOwnerView contract={contract} />
                 </Route>
                 <Route path="/">
                     <OraclesView contract={contract} />
