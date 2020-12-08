@@ -73,9 +73,8 @@ contract FlightSuretyData {
      * @dev Constructor
      *      The deploying account becomes contractOwner
      */
-    constructor() public {
+    constructor(address firstAirline) public {
         contractOwner = msg.sender;
-        address firstAirline = 0xe96ed4fe1676a8da886e5a966a6ca59a307ccb4b;
         airlineRegistrationStatus[firstAirline] = true;
         airlines.push(firstAirline);
         numAirlines = 1;
