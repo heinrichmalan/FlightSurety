@@ -195,7 +195,7 @@ contract FlightSuretyApp {
      *
      */
 
-    function registerFlight() external pure requireIsOperational {
+    function registerFlight() external view requireIsOperational {
         // TODO have a bunch of flights
         // maybe a mapping to a mapping
         // airline -> { flightCode -> struct}
@@ -388,7 +388,7 @@ contract FlightSuretyApp {
         address airline,
         string flight,
         uint256 timestamp
-    ) internal pure requireIsOperational returns (bytes32) {
+    ) internal view requireIsOperational returns (bytes32) {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
