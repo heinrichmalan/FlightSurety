@@ -499,8 +499,11 @@ const PassengerData = ({ contract, passenger, setPolicyData }) => {
 };
 
 const PassengerView = ({ contract }) => {
-    const { passengers } = contract;
-    const [selectedPassenger, setSelectedPassenger] = useState(passengers[0]);
+    console.log(contract.passengers);
+    const [passengers, setPassengers] = useState(contract.passengers);
+    const [selectedPassenger, setSelectedPassenger] = useState(
+        contract.passengers[0]
+    );
     const [policyData, setPolicyData] = useState({
         loading: true,
         activePolicies: [],
@@ -508,6 +511,14 @@ const PassengerView = ({ contract }) => {
     const handleSelect = (e) => {
         setSelectedPassenger(e.target.value);
     };
+
+    useEffect(() => {
+        contract.getPassengers((data) => {
+            setPassengers(data);
+            setSelectedPassenger(data[0]);
+        });
+    }, []);
+
     return (
         <div style={{ margin: "0 auto", marginTop: "100px", width: "450px" }}>
             <label style={{ textAlign: "center", width: "100%" }}>
@@ -762,25 +773,40 @@ const Navbar = ({ contract }) => {
 };
 
 const App = () => {
-    const contract = new Contract("localhost", () => {});
+    const [ready, setReady] = useState(false);
+    const contract = new Contract("localhost", () => setReady(true));
 
     return (
         <Router>
             <Navbar contract={contract} />
-            <Switch>
-                <Route path="/passengers">
-                    <PassengerView contract={contract} />
-                </Route>
-                <Route path="/airlines">
-                    <AirlineView contract={contract} />
-                </Route>
-                <Route path="/contract-owner">
-                    <ContractOwnerView contract={contract} />
-                </Route>
-                <Route path="/">
-                    <PassengerView contract={contract} />
-                </Route>
-            </Switch>
+            {ready ? (
+                <Switch>
+                    <Route path="/passengers">
+                        <PassengerView contract={contract} />
+                    </Route>
+                    <Route path="/airlines">
+                        <AirlineView contract={contract} />
+                    </Route>
+                    <Route path="/contract-owner">
+                        <ContractOwnerView contract={contract} />
+                    </Route>
+                    <Route path="/">
+                        <PassengerView contract={contract} />
+                    </Route>
+                </Switch>
+            ) : (
+                <div>
+                    <h1
+                        style={{
+                            marginTop: "100px",
+                            width: "100%",
+                            textAlign: "center",
+                        }}
+                    >
+                        Loading
+                    </h1>
+                </div>
+            )}
         </Router>
     );
 };

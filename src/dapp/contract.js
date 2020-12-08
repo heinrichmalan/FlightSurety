@@ -25,14 +25,16 @@ export default class Contract {
             FlightSuretyApp.abi,
             config.appAddress
         );
-        this.initialize(callback);
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
+
+        this.initialize(callback);
     }
 
     initialize(callback) {
         window.web3.eth.getAccounts((error, accts) => {
+            if (error) return;
             this.owner = accts[0];
 
             let counter = 1;
@@ -43,7 +45,20 @@ export default class Contract {
             while (this.passengers.length < 5) {
                 this.passengers.push(accts[counter++]);
             }
+            console.log("inited. passenger: ", this.passengers);
             callback();
+        });
+    }
+
+    getPassengers(callback) {
+        window.web3.eth.getAccounts((error, accts) => {
+            callback(accts.slice(1, 6));
+        });
+    }
+
+    getAirlines(callback) {
+        window.web3.eth.getAccounts((error, accts) => {
+            callback(accts.slice(6, 11));
         });
     }
 
