@@ -778,7 +778,7 @@ const App = () => {
                     <ContractOwnerView contract={contract} />
                 </Route>
                 <Route path="/">
-                    <OraclesView contract={contract} />
+                    <PassengerView contract={contract} />
                 </Route>
             </Switch>
         </Router>
