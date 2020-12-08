@@ -101,12 +101,35 @@ contract FlightSuretyApp {
         returns (bool success, uint256 votes)
     {
         require(
-            flightSuretyData.isRegisteredAirline(msg.sender) &&
-                flightSuretyData.isFundedAirline(msg.sender),
-            "Caller has to be a registered and funded airline"
+            msg.sender == contractOwner ||
+                (flightSuretyData.isRegisteredAirline(msg.sender) &&
+                    flightSuretyData.isFundedAirline(msg.sender) &&
+                    !flightSuretyData.isRegisteredAirline(newAirline)),
+            "Caller has to be the contract owner or a registered and funded airline, and airline may not already be registered"
         );
         flightSuretyData.registerAirline(newAirline, msg.sender);
         return (true, 1);
+    }
+
+    function getRegisteredAirlines() external returns (address[]) {
+        return flightSuretyData.getRegisteredAirlines();
+        // address[] memory airlines;
+        // return airlines;
+    }
+
+    function isFundedAirline() public returns (bool) {
+        return flightSuretyData.isFundedAirline(msg.sender);
+    }
+
+    function fundAirline() public payable {
+        require(
+            flightSuretyData.isRegisteredAirline(msg.sender) &&
+                !flightSuretyData.isFundedAirline(msg.sender),
+            "Caller must be a registered but unfunded airline"
+        );
+
+        flightSuretyData.fund.value(msg.value)();
+        flightSuretyData.addAirlineFunding(msg.sender, msg.value);
     }
 
     function voteOnNewAirline(address newAirline, bool vote) external {
@@ -140,6 +163,14 @@ contract FlightSuretyApp {
 
     function getInsuranceCredits() external returns (uint256) {
         return flightSuretyData.getAccountBalance(msg.sender);
+    }
+
+    function withdrawCredits() public {
+        require(
+            flightSuretyData.getAccountBalance(msg.sender) > 0,
+            "Account balance needs to be greater than 0"
+        );
+        flightSuretyData.pay(msg.sender);
     }
 
     /**
@@ -185,8 +216,6 @@ contract FlightSuretyApp {
         uint256 timestamp,
         uint8 statusCode
     ) internal {
-        // TODO payout customer if stuff went wrong?
-
         flightStatuses[flight] = statusCode;
         if (statusCode != uint8(0)) {
             if (statusCode == uint8(20)) {
