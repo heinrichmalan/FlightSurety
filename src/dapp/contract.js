@@ -101,4 +101,53 @@ export default class Contract {
             .getInsuranceCredits()
             .call({ from: passenger }, callback);
     }
+
+    withdrawCredit(passenger, callback) {
+        this.flightSuretyApp.methods
+            .withdrawCredits()
+            .send({ from: passenger }, callback);
+    }
+
+    setOperatingStatus(status, callback) {
+        this.flightSuretyApp.methods
+            .setOperatingStatus(status)
+            .send({ from: this.owner }, callback);
+    }
+
+    registerAirline(address, fromAddress, callback) {
+        this.flightSuretyApp.methods.registerAirline(address).send(
+            {
+                from: fromAddress,
+                // gas: 1000000
+            },
+            callback
+        );
+    }
+
+    getRegisteredAirlines(callback) {
+        this.flightSuretyApp.methods.getRegisteredAirlines().call(
+            {
+                from: this.owner,
+                //  gas: 1000000
+            },
+            callback
+        );
+    }
+
+    isFundedAirline(airline, callback) {
+        this.flightSuretyApp.methods
+            .isFundedAirline()
+            .call({ from: airline }, callback);
+    }
+
+    fundAirline(airline, callback) {
+        this.flightSuretyApp.methods.fundAirline().send(
+            {
+                from: airline,
+                // gas: 1000000,
+                value: window.web3.utils.toWei("10"),
+            },
+            callback
+        );
+    }
 }
