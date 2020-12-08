@@ -127,6 +127,14 @@ contract("Flight Surety Tests", async (accounts) => {
         );
     });
 
+    it("(anyone) can view registered airlines", async () => {
+        let registeredAirlines = [accounts[1], accounts[2]];
+
+        let result = await config.flightSuretyApp.getRegisteredAirlines.call();
+
+        expect(result).to.eql(registeredAirlines);
+    });
+
     it("(airline) cannot register an airline if not a registered airline", async () => {
         let impostor = accounts[3];
         await config.flightSuretyData.fund({
