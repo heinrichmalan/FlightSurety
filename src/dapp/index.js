@@ -70,7 +70,12 @@ const AirlineView = ({ contract }) => {
     };
 
     return (
-        <div style={{ marginTop: "100px" }}>
+        <div
+            style={{
+                maxWidth: "800px",
+                margin: "200px auto",
+            }}
+        >
             <label>
                 {" "}
                 Airline to Act As
@@ -87,7 +92,14 @@ const AirlineView = ({ contract }) => {
             <h4>Funding Status</h4>
             <div>
                 {funded ? "Fully Funded" : "Requires Funding of 10 Ether"}
-                {!funded && <button onClick={fundAirline}>Fund Airline</button>}
+                {!funded && (
+                    <button
+                        style={{ marginLeft: "15px" }}
+                        onClick={fundAirline}
+                    >
+                        Fund Airline
+                    </button>
+                )}
             </div>
             {funded && (
                 <div
