@@ -1,4 +1,5 @@
 const STATUS_CODES = [
+    0, // Unknown
     10, // On Time
     20, // Late Airline
     30, // Late Weather
