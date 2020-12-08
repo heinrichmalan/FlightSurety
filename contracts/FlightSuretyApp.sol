@@ -98,6 +98,7 @@ contract FlightSuretyApp {
 
     function registerAirline(address newAirline)
         external
+        requireIsOperational
         returns (bool success, uint256 votes)
     {
         require(
@@ -111,17 +112,21 @@ contract FlightSuretyApp {
         return (true, 1);
     }
 
-    function getRegisteredAirlines() external returns (address[]) {
+    function getRegisteredAirlines()
+        external
+        requireIsOperational
+        returns (address[])
+    {
         return flightSuretyData.getRegisteredAirlines();
         // address[] memory airlines;
         // return airlines;
     }
 
-    function isFundedAirline() public returns (bool) {
+    function isFundedAirline() public requireIsOperational returns (bool) {
         return flightSuretyData.isFundedAirline(msg.sender);
     }
 
-    function fundAirline() public payable {
+    function fundAirline() public payable requireIsOperational {
         require(
             flightSuretyData.isRegisteredAirline(msg.sender) &&
                 !flightSuretyData.isFundedAirline(msg.sender),
@@ -132,7 +137,10 @@ contract FlightSuretyApp {
         flightSuretyData.addAirlineFunding(msg.sender, msg.value);
     }
 
-    function voteOnNewAirline(address newAirline, bool vote) external {
+    function voteOnNewAirline(address newAirline, bool vote)
+        external
+        requireIsOperational
+    {
         require(
             flightSuretyData.isRegisteredAirline(msg.sender) &&
                 flightSuretyData.isFundedAirline(msg.sender),
@@ -144,6 +152,7 @@ contract FlightSuretyApp {
     function purchasePolicy(address airline, string flightNumber)
         public
         payable
+        requireIsOperational
         returns (bool)
     {
         uint256 refund = 0;
@@ -157,15 +166,23 @@ contract FlightSuretyApp {
         return true;
     }
 
-    function getActivePolicies() external returns (FlightSuretyData.Policy[]) {
+    function getActivePolicies()
+        external
+        requireIsOperational
+        returns (FlightSuretyData.Policy[])
+    {
         return flightSuretyData.getPassengerPolicies(msg.sender);
     }
 
-    function getInsuranceCredits() external returns (uint256) {
+    function getInsuranceCredits()
+        external
+        requireIsOperational
+        returns (uint256)
+    {
         return flightSuretyData.getAccountBalance(msg.sender);
     }
 
-    function withdrawCredits() public {
+    function withdrawCredits() public requireIsOperational {
         require(
             flightSuretyData.getAccountBalance(msg.sender) > 0,
             "Account balance needs to be greater than 0"
@@ -178,7 +195,7 @@ contract FlightSuretyApp {
      *
      */
 
-    function registerFlight() external pure {
+    function registerFlight() external pure requireIsOperational {
         // TODO have a bunch of flights
         // maybe a mapping to a mapping
         // airline -> { flightCode -> struct}
@@ -193,6 +210,7 @@ contract FlightSuretyApp {
 
     function getFlightStatuses(string[] flightCodes)
         public
+        requireIsOperational
         returns (FlightStatus[])
     {
         FlightStatus[] memory flightStatusesView = new FlightStatus[](
@@ -215,7 +233,7 @@ contract FlightSuretyApp {
         string memory flight,
         uint256 timestamp,
         uint8 statusCode
-    ) internal {
+    ) internal requireIsOperational {
         flightStatuses[flight] = statusCode;
         if (statusCode != uint8(0)) {
             if (statusCode == uint8(20)) {
@@ -230,7 +248,7 @@ contract FlightSuretyApp {
         address airline,
         string flight,
         uint256 timestamp
-    ) external {
+    ) external requireIsOperational {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
@@ -303,7 +321,7 @@ contract FlightSuretyApp {
     );
 
     // Register an oracle with the contract
-    function registerOracle() external payable {
+    function registerOracle() external payable requireIsOperational {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
 
@@ -312,7 +330,12 @@ contract FlightSuretyApp {
         oracles[msg.sender] = Oracle({isRegistered: true, indexes: indexes});
     }
 
-    function getMyIndexes() external view returns (uint8[3]) {
+    function getMyIndexes()
+        external
+        view
+        requireIsOperational
+        returns (uint8[3])
+    {
         require(
             oracles[msg.sender].isRegistered,
             "Not registered as an oracle"
@@ -331,7 +354,7 @@ contract FlightSuretyApp {
         string flight,
         uint256 timestamp,
         uint8 statusCode
-    ) external {
+    ) external requireIsOperational {
         require(
             (oracles[msg.sender].indexes[0] == index) ||
                 (oracles[msg.sender].indexes[1] == index) ||
@@ -365,12 +388,16 @@ contract FlightSuretyApp {
         address airline,
         string flight,
         uint256 timestamp
-    ) internal pure returns (bytes32) {
+    ) internal pure requireIsOperational returns (bytes32) {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
     // Returns array of three non-duplicating integers from 0-9
-    function generateIndexes(address account) internal returns (uint8[3]) {
+    function generateIndexes(address account)
+        internal
+        requireIsOperational
+        returns (uint8[3])
+    {
         uint8[3] memory indexes;
         indexes[0] = getRandomIndex(account);
 
@@ -388,7 +415,11 @@ contract FlightSuretyApp {
     }
 
     // Returns array of three non-duplicating integers from 0-9
-    function getRandomIndex(address account) internal returns (uint8) {
+    function getRandomIndex(address account)
+        internal
+        requireIsOperational
+        returns (uint8)
+    {
         uint8 maxValue = 10;
 
         // Pseudo random number...the incrementing nonce adds variation
