@@ -46,10 +46,10 @@ Deploy the contents of the ./dapp folder
 
 
 ## Software Versions
-Truffle v5.1.53 (core: 5.1.53)
+Truffle v5.1.14-nodeLTS.0 (core: 5.1.13)
 Solidity - ^0.4.24 (solc-js)
-Node v13.14.0
-Web3.js v1.2.9
+Node v14.15.0
+Web3.js v1.2.1
 Ganache CLI v6.12.1 (ganache-core: 2.13.1)
 
 ## Resources
