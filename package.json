@@ -12,7 +12,7 @@
     "dapp": "webpack serve --mode development --config webpack.config.dapp.js --history-api-fallback",
     "dapp:prod": "webpack --mode production  --config webpack.config.dapp.js",
     "server": "rm -rf ./prod/server && webpack --config webpack.config.server.js",
-    "ganache": "ganache-cli -a 20 -m 'involve hero zero valid donor august cycle layer song liquid year network'"
+    "ganache": "ganache-cli -a 20 -i 1234 -m 'involve hero zero valid donor august cycle layer song liquid year network'"
   },
   "author": "Nik Kalyani <nik@kalyani.com> https://www.kalyani.com",
   "devDependencies": {
@@ -43,6 +43,7 @@
   "dependencies": {
     "@babel/preset-react": "^7.12.5",
     "@webpack-cli/serve": "^1.1.0",
+    "ganache-cli": "^6.12.1",
     "https-browserify": "^1.0.0",
     "os-browserify": "^0.3.0",
     "react": "^17.0.1",
@@ -52,6 +53,7 @@
     "start-server-nestjs-webpack-plugin": "^2.2.5",
     "truffle-assertions": "^0.9.2",
     "util": "^0.12.3",
+    "web3-provider-engine": "^16.0.1",
     "webpack": "^5.5.0",
     "webpack-cli": "^4.2.0",
     "webpack-dev-server": "^3.11.0",
