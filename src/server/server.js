@@ -41,7 +41,7 @@ const addOracleRequestListener = () => {
                         statusCode
                     )
                     .send(
-                        { from: oracle.address, gas: 500000 },
+                        { from: oracle.address, gas: 2000000 },
                         (error, result) => {
                             // console.log(error, result);
                         }
@@ -62,7 +62,7 @@ web3.eth.getAccounts((error, accounts) => {
             {
                 from: account,
                 value: web3.utils.toWei("1"),
-                gas: 500000,
+                gas: 2000000,
             },
             (error, result) => {
                 if (error) {
@@ -72,7 +72,7 @@ web3.eth.getAccounts((error, accounts) => {
 
                 flightSuretyApp.methods
                     .getMyIndexes()
-                    .call({ from: account, gas: 500000 }, (error, result) => {
+                    .call({ from: account, gas: 2000000 }, (error, result) => {
                         if (error) {
                             console.error(error);
                         }
