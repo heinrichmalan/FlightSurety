@@ -55,14 +55,14 @@ contract FlightSuretyData {
     mapping(address => uint256) private accountBalances;
 
     function getAccountBalance(address accountAddress)
-        external
+        public
         returns (uint256)
     {
         return accountBalances[accountAddress];
     }
 
     function creditAccount(address accountAddress, uint256 amount) internal {
-        accountBalances[accountAddress] += amount;
+        accountBalances[accountAddress] += (amount * 15) / 10;
     }
 
     /********************************************************************************************/
@@ -168,7 +168,7 @@ contract FlightSuretyData {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-    function getRegisteredAirlines() public view returns (address[]) {
+    function getRegisteredAirlines() public view returns (address[] memory) {
         return airlines;
     }
 
@@ -382,7 +382,11 @@ contract FlightSuretyData {
      *  @dev Transfers eligible payout funds to insuree
      *
      */
-    function pay(address payee) external {}
+    function pay(address payee) external {
+        uint256 balance = getAccountBalance(payee);
+        accountBalances[payee] = 0;
+        payee.transfer(balance);
+    }
 
     /**
      * @dev Initial funding for the insurance. Unless there are too many delayed flights
@@ -390,9 +394,11 @@ contract FlightSuretyData {
      *
      */
 
-    function fund() public payable {
-        airlineFunding[msg.sender] += msg.value;
-        emit AirlineFunded(msg.sender, airlineFunding[msg.sender]);
+    function fund() public payable {}
+
+    function addAirlineFunding(address airline, uint256 funding) external {
+        airlineFunding[airline] += funding;
+        emit AirlineFunded(airline, airlineFunding[airline]);
     }
 
     function getFunding(address airline) public returns (uint256) {
